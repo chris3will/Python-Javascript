@@ -16,8 +16,8 @@ firstlog.addEventListener("click",function(){
     }
 });
 function inputmsg(){
-    var us=prompt('请输入你的账号','2017141051019');
-    var ps=prompt('请输入你的密码','656053wcz');
+    var us=prompt('请输入你的账号','');
+    var ps=prompt('请输入你的密码','');
     var username=document.getElementById('LoginName');
     var Password=document.getElementById('Password');
     username.value=us;
@@ -36,12 +36,12 @@ function findmsg(){
             break;
         }
     }//已经找到了需要加载的文字所在标签
-    myname=b[theflag];
+    var myname=b[theflag];
     myname.addEventListener('click',function(){
         window.location.href=myname.href;
     });
 
-    logout=b[theflag+1];
+    var logout=b[theflag+1];
     logout.addEventListener('click',function(){
         window.location.href=logout.href;
     });
