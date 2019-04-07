@@ -222,20 +222,16 @@ def findpath(SS,SF):
         stack.append([row-1,col-1,1])
         stack.append([row-1,col-1,2])
     elif(SF[row-1][col-1]==5):
-        
         pathstack.append(2)
-        
         pathstack.append(1)
         stack.append([row-1,col-1,1])
         stack.append([row-1,col-1,4])
     elif(SF[row-1][col-1]==6):
-        
         pathstack.append(2)
         pathstack.append(1)
         stack.append([row-1,col-1,2])
         stack.append([row-1,col-1,4])
     else:
-        
         pathstack.append(3)
         pathstack.append(2)
         pathstack.append(1)
@@ -263,7 +259,7 @@ def findpath(SS,SF):
             temp2.append(j[1])
         temp1.reverse()
         temp2.reverse()#注意反转的方式，否则返回的东西很奇葩
-        final[p]=[temp1,temp2]
+        final[p]=["".join(temp1),"".join(temp2)]
     
     print(' {} answers has been found for you!.'.format(len(ans)))
     print(final)#finall 即为所求
