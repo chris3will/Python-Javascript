@@ -34,8 +34,8 @@ a=np.array([
 def shift(matrix,generation):
     #迭代矩阵用的，输入的即上一代矩阵
     tmp=matrix
-    for i in range(generation+1):
-        for j in range(generation+1):
+    for i in range(len(matrix)):
+        for j in range(len(matrix[0])):
             tmp[i][j]=min(matrix[i][j],matrix[i][generation-1]+matrix[generation-1][j])
     
     return tmp
