@@ -5,6 +5,8 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import math
+from numpy.core.fromnumeric import var
+import sympy as sym
 
 def divide_range(func,a,b,length = 0.05):
     '''
@@ -100,13 +102,122 @@ def first_question():
         # 弦割法 不用特别点的切线，而是用两点连线来处理 Secant method
         print("start secant_method iteration")
         secant = secant_method(P,range[0],range[1],epsilon1,epsilon2)
+    
 
 def born240_2():
     '''
     针对p240 7.3 （2）进行求解的过程
     利用sympy库对函数进行参数化定义
     '''
-    import
+    
+    # x0 = np.asarray([[1.04],[0.47]],np.float64)
+    x0 = np.asarray([1.04,0.47],np.float64)
+    x1 = sym.Symbol('x1')
+    x2 = sym.Symbol('x2')
+    func1 = sym.cos(x1**2+0.4*x2) + x1**2 + x2**2-1.6
+    func2 = 1.5*x1**2 - (1/0.36)*x2**2 - 1
+
+    return [func1,func2,x1,x2,x0]
+
+
+
+
+def solve_second_question():
+    '''
+    为解决题目，提供更直接的内容思路
+
+    '''
+    func1,func2,x1,x2,x0 = born240_2()
+    print(func1,func2,"打印两个方程")
+    # 打印求导的结果
+    func1_1 = sym.diff(func1,x1)
+    func1_2 = sym.diff(func1,x2)
+    func2_1 = sym.diff(func2,x1)
+    func2_2 = sym.diff(func2,x2)
+    print(func1_1,"1,x1偏导数")
+    print(func1_2,"1,x2偏导数")
+    func_J = lambda x: np.array([
+        [func1_1.subs({x1:x[0],x2:x[1]}),func1_2.subs({x1:x[0],x2:[1]})],
+        [func2_1.subs({x1:x[0],x2:x[1]}),func2_2.subs({x1:x[0],x2:x[1]})]
+    ],np.float64)
+
+    func_b = lambda x: np.array([
+        [func1.subs({x1:x[0],x2:x[1]})],
+        [func2.subs({x1:x[0],x2:x[1]})]
+    ],np.float64)
+
+    
+    # 用牛顿法解决
+
+    epsilon1 = 1e-8
+    epsilon2 = 1e-8
+    iter_max = 200
+    vars = [x1,x2] 
+    vals = [x0[0],x0[1]]
+    # for item in vals:
+    #     print(item,type(item),"传入之前观察类型")
+    for epoch in range(1,iter_max):
+        print(x0,"迭代前观察一下x")
+        J = np.asarray([
+            [func1_1.subs([(x1,x0[0]),(x2,x0[1])]),func1_2.subs({x1:x0[0],x2:x0[1]})],
+            [func2_1.subs([(x1,x0[0]),(x2,x0[1])]),func2_2.subs({x1:x0[0],x2:x0[1]})]
+        ],np.float64)
+        print(J,"after iteration show the J")
+        b = np.asarray([
+            [-1*func1.subs({x1:x0[0],x2:x0[1]})],
+            [-1*func2.subs({x1:x0[0],x2:x0[1]})]
+        ],np.float64)
+        print(b,"after iteration show the b")
+        '''
+        # J = np.array([
+        #     [func1_1.subs({x1:x0[0],x2:x0[1]}),func1_2.subs({x1:x0[0],x2:x0[1]})],
+        #     [func2_1.subs({x1:x0[0],x2:x0[1]}),func2_2.subs({x1:x0[0],x2:x0[1]})]
+        # ])
+        # print(J,"after iteration show the J")
+        # b = np.array([
+        #     [func1.subs({x1:x0[0],x2:x0[1]})],
+        #     [func2.subs({x1:x0[0],x2:x0[1]})]
+        # ])
+        # print(b,"after iteration show the b")
+        # J = np.asarray([
+        #     [func1_1.subs(vars,vals),func1_2.subs(vars,vals)],
+        #     [func2_1.subs(vars,vals),func2_2.subs(vars,vals)]
+        # ],np.float64)
+        # print(J,"after iteration show the J")
+        # b = np.asarray([
+        #     [-1*func1.subs(vars,vals)],
+        #     [-1*func2.subs(vars,vals)]
+        # ],np.float64)
+        # print(b,"after iteration show the b")
+        '''
+        delta_x = np.linalg.solve(J,b) # 调用库方法进行求解
+
+        print(delta_x,np.shape(delta_x),"观察计算的delta形式")
+
+        # 先将x0变为列向量
+        x0 = x0.reshape(-1,1)
+
+        x0 = x0 + delta_x
+        
+        vals = [x0[0][0],x0[1][0]]
+        # print(vals,type(vals),"print vals")
+        # print(x0,type(x0),"print x0")
+        # print(delta_x,type(delta_x),"print delta_x")
+
+        fnx = np.asarray([
+            [func1.subs({x1:x0[0][0],x2:x0[1][0]})],
+            [func2.subs({x1:x0[0][0],x2:x0[1][0]})]
+        ],np.float64)
+
+        if (np.linalg.norm(x0-delta_x)!=0 and np.linalg.norm(delta_x) / np.linalg.norm(x0-delta_x)) < epsilon1 or np.linalg.norm(fnx)  < epsilon2:
+            print("stop at epoch : {}".format(epoch))
+            break
+        # 再将x0恢复数组
+        x0 = x0.reshape(-1)
+    
+    print(x0,"迭代结果即为所求")
+
+
 
 def second_question():
 
@@ -183,9 +294,12 @@ def second_question():
             print("stop at epoch : {}".format(epoch))
             break
 
-    print(x0,"结果即为所求")
+    print(x0,"结果即为所求,牛顿法解第(1)题的结果")
+
+    
 
 if __name__ == '__main__':
 
-    first_question()
+    # first_question()
     # second_question()
+    solve_second_question()
