@@ -234,6 +234,7 @@ def second_question():
     # 1 先把每个方程表示出来
     # 2 再把每个方程关于不同变量的导数求解出来，放在矩阵的对应位置上
     # 3 得到了这个新的J_f矩阵
+    print("start newtown method")
     x0 = np.asarray([[1],[1],[1]],np.float64)
     func1 = lambda x : x[0]**2 + x[1]**2 + x[2]**2 - 1
     func2 = lambda x : 2*x[0]**2 + x[1]**2 - 4*x[2]
@@ -256,7 +257,7 @@ def second_question():
     func3_2 = lambda x: -8*x[1]
     func3_3 = lambda x: 2*x[2]
 
-    iter_max = 10 # 先设置迭代次数上限
+    iter_max = 100 # 先设置迭代次数上限
 
     # 从库中引入共轭梯度法求解方程
     from tool_method import conjugate
@@ -266,11 +267,13 @@ def second_question():
     epsilon2 = 1e-8
     stop = 0
     for epoch in range(iter_max):
-        J = np.array([
+        J = np.asarray([
             [func1_1(x0),func1_2(x0),func1_3(x0)],
             [func2_1(x0),func2_2(x0),func2_3(x0)],
             [func3_1(x0),func3_2(x0),func3_3(x0)]
         ],np.float64)
+        print(J,"打印J")
+        print(np.linalg.inv(J),"打印J的逆矩阵")
         b1 = -1 * func1(x0)
         b2 = -1 * func2(x0)
         b3 = -1 * func3(x0)
@@ -283,7 +286,7 @@ def second_question():
         
         delta_x = np.linalg.solve(J,b) # 调用库方法得到一组解
 
-        print(delta_x,np.shape(delta_x),"观察一次结果")
+        # print(J,delta_x,np.shape(delta_x),"观察一次结果 (J,delta_x,shape(delta_x)")
         
         # 然后更新原始的x
         x0 = x0 +delta_x
@@ -296,10 +299,86 @@ def second_question():
 
     print(x0,"结果即为所求,牛顿法解第(1)题的结果")
 
-    
+    # 布罗伊登法求解问题
+    # Broyden法求解
+    '''
+    确定初始向量x0
+    给定两个误差标准epsilon1，epsilon2
+    设置最大迭代次数iter_max
+    根据初始向量计算迭代需要的矩阵A0
+    根据A0计算出x1，接着就开始不断的迭代过程即可
 
+    '''
+    
+    print("start broyden method")
+    # 重置x0的情况
+    x0 = np.asarray([[1],[1],[1]],np.float64) # 采用一个数组的形式进行的定义，这样数据的类型会根据其出现的位置动态调整p
+    A0 = np.asarray([
+            [func1_1(x0),func1_2(x0),func1_3(x0)],
+            [func2_1(x0),func2_2(x0),func2_3(x0)],
+            [func3_1(x0),func3_2(x0),func3_3(x0)]
+        ],np.float64)
+    print(A0,"init A0")
+    fx0 = np.asarray([
+        func1(x0),
+        func2(x0),
+        func3(x0)
+    ],np.float64).reshape(-1,1)    
+    x1 = x0 - np.linalg.inv(A0).dot(fx0)
+    # print(x1,"打印计算一次后的x1")
+
+    for i in range(1,iter_max):
+        # 开始进行迭代
+        # print(f'{i} epoch')
+        s1 = x1 - x0
+        # print("s1",s1,type(s1))
+        fx1 = np.asarray([
+            func1(x1),
+            func2(x1),
+            func3(x1)
+        ],np.float64).reshape(-1,1)
+        # print("fx1",fx1,type(fx1))
+        fx0 = np.asarray([
+            func1(x0),
+            func2(x0),
+            func3(x0)
+        ],np.float64).reshape(-1,1)    
+        y1 = fx1 - fx0
+        # print(y1,"打印y1，观察fx前后的差值")
+        A0_inv = np.linalg.inv(A0)
+        # print("invA0",A0_inv,type(A0_inv))
+        add_item = ((s1 - A0_inv.dot(y1)).dot(s1.T).dot(A0_inv)) / (s1.T.dot(A0_inv).dot(y1))
+        A1_inv = A0_inv + add_item
+        # print("invA1",A1_inv,type(A1_inv))
+
+        x2 = x1 - A1_inv.dot(fx1)
+        # print("x2",x2)
+        # 判断终止条件
+        fx2 = np.asarray([
+            func1(x2),
+            func2(x2),
+            func3(x2)
+        ],np.float64).reshape(-1,1)
+        # print(fx2,"观察fx2的迭代情况")
+        # print((x2-x1),np.linalg.norm(x2-x1),"观察x向量做差")
+        # break
+
+        if np.linalg.norm(x2-x1) < epsilon1 or np.linalg.norm(fx2) < epsilon2:
+            print(f'stop at epoch {epoch}')
+            x1 = x2
+            break   
+        
+        # 每次循环结束，更新变量
+
+        x0 = x1
+        x1 = x2
+    
+    print(x1,"结果即为所求，布罗伊登法求解第(1)题结果")
+
+
+    
 if __name__ == '__main__':
 
     # first_question()
-    # second_question()
-    solve_second_question()
+    second_question()
+    # solve_second_question()
