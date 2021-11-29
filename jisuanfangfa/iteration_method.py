@@ -111,6 +111,7 @@ def born240_2():
     '''
     
     # x0 = np.asarray([[1.04],[0.47]],np.float64)
+    print("进行第二题的问题求解")
     x0 = np.asarray([1.04,0.47],np.float64)
     x1 = sym.Symbol('x1')
     x2 = sym.Symbol('x2')
@@ -119,14 +120,100 @@ def born240_2():
 
     return [func1,func2,x1,x2,x0]
 
-
-
-
-def solve_second_question():
+def delta_A(A0_inv:np.ndarray,s1:np.ndarray,y1:np.ndarray):
     '''
+    直接返回增量的add项
+    inv_A 矩阵
+    s 列向量
+    y 列向量
+    '''
+    return ((s1 - A0_inv.dot(y1)).dot(s1.T).dot(A0_inv)) / (s1.T.dot(A0_inv).dot(y1))
+
+
+def solve_second_question_broyden():
+    '''
+    第二大题的第二小问，利用布罗伊登法求解。
+    '''
+
+    # 获取必要的参数内容
+    func1,func2,x1,x2,x0 = born240_2()
+    func1_1 = sym.diff(func1,x1)
+    func1_2 = sym.diff(func1,x2)
+    func2_1 = sym.diff(func2,x1)
+    func2_2 = sym.diff(func2,x2)
+
+    # Broyden法求解
+    '''
+    确定初始向量x0
+    给定两个误差标准epsilon1，epsilon2
+    设置最大迭代次数iter_max
+    根据初始向量计算迭代需要的矩阵A0
+    根据A0计算出x1，接着就开始不断的迭代过程即可
+
+    '''
+    print("第二大题第二小问的布罗伊登解法开始")
+    x0 = x0.reshape(-1,1)
+    epsilon1 = epsilon2 = 1e-8
+    iter_max = 200
+    A0 = np.asarray([
+        [func1_1.subs([(x1,x0[0][0]),(x2,x0[1][0])]), func1_2.subs([(x1,x0[0][0]),(x2,x0[1][0])])],
+        [func2_1.subs([(x1,x0[0][0]),(x2,x0[1][0])]), func2_2.subs([(x1,x0[0][0]), (x2,x0[1][0])])]
+    ],np.float64)
+
+    fx0 = np.asarray([
+        func1.subs({x1:x0[0][0],x2:x0[1][0]}),
+        func2.subs({x1:x0[0][0], x2:x0[1][0]})
+    ],np.float64).reshape(-1,1)
+
+    inv_A0 = np.linalg.inv(A0)
+    x_1 = x0 - inv_A0.dot(fx0)
+
+    # print(inv_A0,x_1,"before iteration, show the vairables")
+    for epoch in (1,iter_max):
+        s1 = x_1 - x0
+        fx1 = np.asarray([
+            func1.subs({x1:x_1[0][0], x2:x_1[1][0]}),
+            func2.subs({x1:x_1[0][0], x2:x_1[1][0]})
+        ],np.float64).reshape(-1,1)
+        fx0 = np.asarray([
+            func1.subs({x1:x0[0][0],x2:x0[1][0]}),
+            func2.subs({x1:x0[0][0], x2:x0[1][0]})
+        ],np.float64).reshape(-1,1)
+        y1 = fx1 - fx0
+
+        inv_A1 = inv_A0 + delta_A(inv_A0,s1,y1)
+        x_2 = x_1 - inv_A1.dot(fx1)
+
+        fx2 = np.asarray([
+            func1.subs({x1:x_2[0][0], x2:x_2[1][0]}),
+            func2.subs({x1:x_2[0][0], x2:x_2[1][0]})
+        ],np.float64).reshape(-1,1)
+        # print(fx2,"首次打印fx2")
+        # print(x_2-x_1,type(x_2-x_1),"输出x2-x1")
+        # print(np.linalg.norm(x_2-x_1),"输出第一项指标")
+        # # break
+        if np.linalg.norm(x_2-x_1) <= epsilon1 or np.linalg.norm(fx2) <= epsilon2:
+            print(f'stop at epoch: {epoch}')
+            break
+        
+        x0 = x_1
+        x_1 = x_2
+        inv_A0 = inv_A1
+    
+    print(x_2,"结果即为所求，(2)问的布罗伊登解法")
+
+
+
+
+
+
+def solve_second_question_newtwon(method:str = None):
+    '''
+    第二大题的第二问
     为解决题目，提供更直接的内容思路
 
     '''
+    
     func1,func2,x1,x2,x0 = born240_2()
     print(func1,func2,"打印两个方程")
     # 打印求导的结果
@@ -219,7 +306,7 @@ def solve_second_question():
 
 
 
-def second_question():
+def second_question_first():
 
     '''
     初始向量x0 = [1,1,1]'
@@ -347,8 +434,7 @@ def second_question():
         # print(y1,"打印y1，观察fx前后的差值")
         A0_inv = np.linalg.inv(A0)
         # print("invA0",A0_inv,type(A0_inv))
-        add_item = ((s1 - A0_inv.dot(y1)).dot(s1.T).dot(A0_inv)) / (s1.T.dot(A0_inv).dot(y1))
-        A1_inv = A0_inv + add_item
+        A1_inv = A0_inv + delta_A(A0_inv,s1,y1)
         # print("invA1",A1_inv,type(A1_inv))
 
         x2 = x1 - A1_inv.dot(fx1)
@@ -372,6 +458,7 @@ def second_question():
 
         x0 = x1
         x1 = x2
+        A0_inv = A1_inv # 这个之前忘了更新了
     
     print(x1,"结果即为所求，布罗伊登法求解第(1)题结果")
 
@@ -380,5 +467,6 @@ def second_question():
 if __name__ == '__main__':
 
     # first_question()
-    second_question()
-    # solve_second_question()
+    second_question_first()
+    # solve_second_question_newtwon()
+    # solve_second_question_broyden()
