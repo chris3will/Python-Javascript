@@ -203,8 +203,62 @@ def solve_second_question_broyden():
     print(x_2,"结果即为所求，(2)问的布罗伊登解法")
 
 
+def solve_second_question_secant():
+    '''
+    求解第二大题的第三小问，利用弦割法处理
+    取一个较小的h来参与计算
+    用差商代替偏导，减少了一部分计算
+    对于f_ij^k 需要表达出一个e_j*h的概念
+    e_j利用numpy生成列向量，然后对一位进行修改即可。
+    
+    '''
+    epsilon1 = 1e-8
+    epsilon2 = 1e-8
+    h = 0.1 # 取的一个间隔长度
+    iter_max = 200 # 最大迭代次数
 
+    func1,func2,x1,x2,x0 = born240_2()
+    
+    func1_1 = sym.diff(func1,x1)
+    func1_2 = sym.diff(func1,x2)
+    func2_1 = sym.diff(func2,x1)
+    func2_2 = sym.diff(func2,x2)
+    print("开始进行弦割法处理**************")
+    for epoch in range(1,100):
+        new_J = (1/h)*np.asarray([
+            [func1.subs([(x1,x0[0]+h),(x2,x0[1])]) - func1.subs([(x1,x0[0]),(x2,x0[1])]), func1.subs({x1:x0[0],x2:x0[1]+h}) - func1.subs({x1:x0[0],x2:x0[1]})],
+            [func2.subs([(x1,x0[0]+h),(x2,x0[1])]) - func2.subs([(x1,x0[0]),(x2,x0[1])]), func2.subs({x1:x0[0],x2:x0[1]+h}) - func2.subs({x1:x0[0],x2:x0[1]})]
+        ],np.float64)
+        print(new_J,"after iteration show the new J")
+        b = np.asarray([
+            [-1*func1.subs({x1:x0[0],x2:x0[1]})],
+            [-1*func2.subs({x1:x0[0],x2:x0[1]})]
+        ],np.float64)
 
+        print(b,"after iteration show the b")
+
+        delta_x = np.linalg.solve(new_J,b) # 调用库方法进行求解
+
+        print(delta_x,"观察计算的delta")
+        x0 = x0.reshape(-1,1)
+        x0 = x0 + delta_x
+        fnx = np.asarray([
+            [func1.subs({x1:x0[0][0],x2:x0[1][0]})],
+            [func2.subs({x1:x0[0][0],x2:x0[1][0]})]
+        ],np.float64)
+
+        # if np.linalg.norm(delta_x) < epsilon1 or np.linalg.norm(fnx)  < epsilon2:
+        #     print("stop at epoch : {}".format(epoch))
+        #     break
+
+        if  np.linalg.norm(delta_x) < epsilon1 or np.linalg.norm(fnx) < epsilon2:
+            print("stop at epoch : {}".format(epoch))
+            break
+
+        x0 = x0.reshape(-1)
+        print(x0,'观察x0')
+
+    print(x0,"迭代结果即为所求")
 
 
 def solve_second_question_newtwon(method:str = None):
@@ -255,28 +309,7 @@ def solve_second_question_newtwon(method:str = None):
             [-1*func2.subs({x1:x0[0],x2:x0[1]})]
         ],np.float64)
         print(b,"after iteration show the b")
-        '''
-        # J = np.array([
-        #     [func1_1.subs({x1:x0[0],x2:x0[1]}),func1_2.subs({x1:x0[0],x2:x0[1]})],
-        #     [func2_1.subs({x1:x0[0],x2:x0[1]}),func2_2.subs({x1:x0[0],x2:x0[1]})]
-        # ])
-        # print(J,"after iteration show the J")
-        # b = np.array([
-        #     [func1.subs({x1:x0[0],x2:x0[1]})],
-        #     [func2.subs({x1:x0[0],x2:x0[1]})]
-        # ])
-        # print(b,"after iteration show the b")
-        # J = np.asarray([
-        #     [func1_1.subs(vars,vals),func1_2.subs(vars,vals)],
-        #     [func2_1.subs(vars,vals),func2_2.subs(vars,vals)]
-        # ],np.float64)
-        # print(J,"after iteration show the J")
-        # b = np.asarray([
-        #     [-1*func1.subs(vars,vals)],
-        #     [-1*func2.subs(vars,vals)]
-        # ],np.float64)
-        # print(b,"after iteration show the b")
-        '''
+
         delta_x = np.linalg.solve(J,b) # 调用库方法进行求解
 
         print(delta_x,np.shape(delta_x),"观察计算的delta形式")
@@ -463,10 +496,39 @@ def second_question_first():
     print(x1,"结果即为所求，布罗伊登法求解第(1)题结果")
 
 
+    # 开始用弦割法
+    print("开始用弦割法解决第二大题第一小问的方程****************")
+    # 重置必要参数
+    h = 0.1
+    x0 = np.asarray([[1],[1],[1]],np.float64) # 采用一个数组的形式进行的定义，这样数据的类型会根据其出现的位置动态调整p
+
+    for epoch in range(1,iter_max):
+        new_J = np.asarray([
+            [func1(x0+np.asarray([[h],[0],[0]])) - func1(x0), func1(x0 + np.asarray([[0],[h],[0]])) - func1(x0), func1(x0 + np.asarray([[0],[0],[h]])) - func1(x0)],
+            [func2(x0+np.asarray([[h],[0],[0]])) - func2(x0), func2(x0 + np.asarray([[0],[h],[0]])) - func2(x0), func2(x0 + np.asarray([[0],[0],[h]])) - func2(x0)],
+            [func3(x0+np.asarray([[h],[0],[0]])) - func3(x0), func3(x0 + np.asarray([[0],[h],[0]])) - func3(x0), func3(x0 + np.asarray([[0],[0],[h]])) - func3(x0)],
+        ],np.float64)
+
+        b1 = -1 * func1(x0)
+        b2 = -1 * func2(x0)
+        b3 = -1 * func3(x0)
+        b = np.asarray([b1,b2,b3],np.float64)
+
+
+        delta_x = np.linalg.solve(J,b) # 调用库方法得到一组解
+
+        x0 = x0 +delta_x
+        
+        if np.linalg.norm(delta_x) < epsilon1 or np.linalg.norm([-func1(x0),-func2(x0),-func3(x0)]) < epsilon2:
+            print("stop at epoch : {}".format(epoch))
+            break
+
+    print(x0,"结果即为所求,弦割法解第(1)题的结果")
     
 if __name__ == '__main__':
 
     # first_question()
     second_question_first()
+    # solve_second_question_secant()
     # solve_second_question_newtwon()
     # solve_second_question_broyden()
